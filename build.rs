@@ -20,6 +20,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .to_string();
             path.pop();
 
+            let bin = path.join("bin");
+
+            if !bin.exists() {
+                fs::create_dir(bin)?;
+            }
+
             fs::write(
                 path.join("bin").join(format!("{}.bin", stem)),
                 data.replace(BG_TMPL_CHAR, BG_CHAR)
