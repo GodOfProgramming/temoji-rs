@@ -1,0 +1,52 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Specify the version"
+        required: true
+        default: "0.1.0"
+        type: string
+  push:
+    tags:
+      - "v*"
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-release:
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            bin_name: temoji-rs.exe
+            release_name: temoji-win64.exe
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+      - name: Build Binary
+        working-directory: .
+        run: cargo build --release --verbose
+      - name: Upload Windows Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: temoji-win64-${{ inputs.version }}
+          path: ./target/release/temoji-rs.exe
+      - name: Create Windows GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: Release ${{ inputs.version }}
+          files: ./target/release/temoji-rs.exe
